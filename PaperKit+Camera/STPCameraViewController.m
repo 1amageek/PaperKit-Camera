@@ -7,13 +7,32 @@
 //
 
 #import "STPCameraViewController.h"
+#import "STPAssetViewController.h"
+
+@interface _STPCameraBackgroundCell : PKCollectionViewCell
+
+@end
 
 
+@implementation _STPCameraBackgroundCell
+
+- (nonnull instancetype)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    
+    if (self) {
+        self.backgroundColor = [UIColor clearColor];
+        self.opaque = NO;
+    }
+    
+    return self;
+}
+@end
 
 @interface STPCameraViewController () <STPCameraViewDelegate>
-
-@property (nonatomic) STPCameraCollectionViewController *viewController;
-
+@property (nonatomic) UIView *preview;
+@property (nonatomic) NSArray *backgroundData;
+@property (nonatomic) NSArray *foregroundData;
 @end
 
 @implementation STPCameraViewController
@@ -22,7 +41,7 @@
 {
     self = [super init];
     if (self) {
-        [self commonInit];
+        [self _commonInit];
     }
     return self;
 }
@@ -31,15 +50,15 @@
 {
     self = [super initWithCoder:aDecoder];
     if (self) {
-        [self commonInit];
+        [self _commonInit];
     }
     return self;
 }
 
-- (void)commonInit
+- (void)_commonInit
 {
     _images = @[];
-    _viewController = [STPCameraCollectionViewController new];
+    _backgroundData = @[@"撮影"];
     [self setupAVCapture];
 }
 
@@ -69,88 +88,91 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             [STPCameraManager sharedManager].session = session;
             [STPCameraManager sharedManager].stillImageOut = stillImageOut;
-            CALayer *previewLayer = self.cameraView.layer;
+            CALayer *previewLayer = self.view.layer;
             previewLayer.masksToBounds = YES;
-            [previewLayer addSublayer:captureVideoPreviewLayer];
-            [self.cameraView buildSubviews];
+            [previewLayer insertSublayer:captureVideoPreviewLayer atIndex:0];
         });
     });
-}
-
-- (void)loadView
-{
-    [super loadView];
-    [self.view addSubview:self.cameraView];
-}
-
-- (UIView *)cameraView
-{
-    if (_cameraView) {
-        return _cameraView;
-    }
-    _cameraView = [[STPCameraView alloc] initWithFrame:self.view.bounds];
-    _cameraView.controller = self;
-    return _cameraView;
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
-    // set gesture
-    _tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapToOptimize:)];
-    _panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panToExpose:)];
-    _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(pressToLockFocus:)];
-    
-    [self.cameraView addGestureRecognizer:_tapGestureRecognizer];
-    [self.cameraView addGestureRecognizer:_panGestureRecognizer];
-    [self.cameraView addGestureRecognizer:_longPressGestureRecognizer];
-    
-    [self addChildViewController:self.viewController];
-    [self.view addSubview:self.viewController.view];
-    [self.viewController didMoveToParentViewController:self];
-    
-    
+    self.minimumZoomScale = 0.2;
+    self.collectionView.backgroundColor = [UIColor clearColor];
+    [self.collectionView registerClass:[STPCameraCell class] forCellWithReuseIdentifier:@"STPCameraCell"];
+    [self.collectionView registerClass:[_STPCameraBackgroundCell class] forCellWithReuseIdentifier:@"_STPCameraBackgroundCell"];
 }
 
-#pragma mark - gesture
-
-- (void)tapToOptimize:(UITapGestureRecognizer *)recognizer
+- (void)addImage:(UIImage *)image
 {
-    CGPoint point = [recognizer locationInView:self.cameraView];
-    [self.cameraView draw:self.cameraView.focusBox atPoint:point remove:YES];
+    NSMutableArray *images = self.images.mutableCopy;
+    [images insertObject:image atIndex:0];
+    self.images = images;
+    NSMutableArray *insertIndexPaths = @[].mutableCopy;
+    [insertIndexPaths addObject:[NSIndexPath indexPathForItem:0 inSection:0]];
+    [self foregroundCollectionViewOnCategory:self.selectedCategory performBatchUpdates:^(PKCollectionViewController *controller){
+        [controller.collectionView insertItemsAtIndexPaths:insertIndexPaths];
+    } completion:^(BOOL finished) {
+        [self.view setNeedsLayout];
+    }];
 }
 
-- (void)panToExpose:(UIPanGestureRecognizer *)recognizer
+#pragma mark  - collection view delegate
+
+- (NSInteger)backgroundCollectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
-    CGPoint location = [recognizer locationInView:self.cameraView];
+    return _backgroundData.count;
+}
+
+- (NSInteger)foregroundCollectionVew:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section onCategory:(NSInteger)category
+{
+    return _images.count;
+}
+
+- (UICollectionViewCell *)backgroundCollectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"_STPCameraBackgroundCell" forIndexPath:indexPath];
     
+    if (indexPath.item == 0) {
+        STPCameraCell *cell = (STPCameraCell *)[collectionView dequeueReusableCellWithReuseIdentifier:@"STPCameraCell" forIndexPath:indexPath];
+        cell.cameraView.controller = self;
+        return cell;
+    }
+    
+    return cell;
 }
 
-- (void)pressToLockFocus:(UILongPressGestureRecognizer *)recognizer
+- (PKContentViewController *)foregroundCollectionView:(PKCollectionView *)collectionView contentViewControllerForAtIndexPath:(NSIndexPath *)indexPath onCategory:(NSUInteger)category
 {
-    CGPoint location = [recognizer locationInView:self.cameraView];
+    UIImage *image = [self.images objectAtIndex:indexPath.item];
+    return [[STPAssetViewController alloc] initWithImage:image];
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
 }
 
 #pragma mark - Camera view delegate
 
 - (void)cameraViewStartRecording
 {
-    [[STPCameraManager sharedManager] startRecordingWithCompletionHandler:^(UIImage *image, NSDictionary *metaData, NSError *error) {
+    [[STPCameraManager sharedManager] captureImageWithCompletionHandler:^(UIImage *image, NSDictionary *metaData, NSError *error) {
         
         if (error) {
             return ;
         }
         
         if (image) {
-            [self.viewController addImage:image];
+            [self addImage:image];
         }
     }];
 }
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+- (void)dealloc
+{
+    [[STPCameraManager sharedManager] terminate];
 }
 
 

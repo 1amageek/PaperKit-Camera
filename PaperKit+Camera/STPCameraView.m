@@ -12,6 +12,7 @@
 
 @property (nonatomic) UIButton *triggerButton;
 @property (nonatomic) CGFloat optimizeProgress;
+@property (nonatomic) UITapGestureRecognizer *tapGestureRecognizer;
 
 @end
 
@@ -38,13 +39,17 @@
 - (void)commonInit
 {
     self.tintColor = [UIColor whiteColor];
+    [self.layer addSublayer:self.focusBox];
+    //[self.layer addSublayer:self.exposeBox];
+    [self addSubview:self.triggerButton];
+    
+    _tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapGesture:)];
+    [self addGestureRecognizer:_tapGestureRecognizer];
 }
 
-- (void)buildSubviews
+- (void)tapGesture:(UITapGestureRecognizer *)recognizer
 {
-    [self.layer addSublayer:self.focusBox];
-    [self.layer addSublayer:self.exposeBox];
-    [self addSubview:self.triggerButton];
+    [self draw:self.focusBox atPoint:[recognizer locationInView:self] remove:YES];
 }
 
 - (void)setOptimizeProgress:(CGFloat)optimizeProgress
@@ -56,8 +61,7 @@
     
     CGFloat scale = POPTransition(opacity, 3, 1);
     self.focusBox.transform = CATransform3DMakeScale(scale, scale, 1);
-    
-    
+
 }
 
 static inline CGFloat POPTransition(CGFloat progress, CGFloat startValue, CGFloat endValue) {
@@ -76,8 +80,7 @@ static inline CGFloat POPTransition(CGFloat progress, CGFloat startValue, CGFloa
     }
     
     POPSpringAnimation *animation = [POPSpringAnimation animation];
-    
-    POPAnimatableProperty *prop = [POPAnimatableProperty propertyWithName:@"inc.stamp.stp.camera.optimize" initializer:^(POPMutableAnimatableProperty *prop) {
+    POPAnimatableProperty *prop = [POPAnimatableProperty propertyWithName:@"inc.stamp.stp.camera.optimize.property" initializer:^(POPMutableAnimatableProperty *prop) {
         prop.readBlock = ^(id obj, CGFloat values[]) {
             values[0] = [obj optimizeProgress];
         };
@@ -88,16 +91,21 @@ static inline CGFloat POPTransition(CGFloat progress, CGFloat startValue, CGFloa
     }];
     
     animation.property = prop;
-    animation.completionBlock = ^(POPAnimation *anim, BOOL finished) {};
+    animation.completionBlock = ^(POPAnimation *anim, BOOL finished) {
+    
+        if (finished) {
+            POPBasicAnimation *animation = [POPBasicAnimation animationWithPropertyNamed:kPOPLayerOpacity];
+            animation.duration = 0.5f;
+            animation.fromValue = @(1);
+            animation.toValue = @(0);
+            [layer pop_addAnimation:animation forKey:@"inc.stamp.camera.layer.opacity"];
+        }
+        
+    };
     animation.fromValue = @(0);
     animation.toValue = @(1);
-    
-    /*
-    POPBasicAnimation *animation = [POPBasicAnimation animationWithPropertyNamed:kPOPLayerOpacity];
-    animation.fromValue = @(1);
-    animation.toValue = @(0);
-    [layer pop_addAnimation:animation forKey:@"inc.stamp.camera.layer.opacity"];
-     */
+    [self pop_addAnimation:animation forKey:@"inc.stamp.stp.camera.optimize"];
+
 }
 
 - (UIButton *)triggerButton
@@ -135,7 +143,7 @@ static inline CGFloat POPTransition(CGFloat progress, CGFloat startValue, CGFloa
     _focusBox = [CALayer new];
     [_focusBox setCornerRadius:45.0f];
     [_focusBox setBounds:CGRectMake(0.0f, 0.0f, 90, 90)];
-    [_focusBox setBorderWidth:5.f];
+    [_focusBox setBorderWidth:1.f];
     [_focusBox setBorderColor:[[UIColor whiteColor] CGColor]];
     
     return _focusBox;

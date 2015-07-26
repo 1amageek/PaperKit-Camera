@@ -18,7 +18,6 @@
 
 @property (nonatomic) id <STPCameraViewDelegate> controller;
 
-- (void)buildSubviews;
 - (void)draw:(CALayer *)layer atPoint:(CGPoint)point remove:(BOOL)remove;
 
 @end

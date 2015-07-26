@@ -8,16 +8,18 @@
 
 @import UIKit;
 @import AVFoundation;
-
+@import CoreMotion;
 
 @interface STPCameraManager : NSObject
 
+@property (nonatomic, readonly) UIDeviceOrientation deviceOrientation;
+@property (nonatomic, readonly) UIInterfaceOrientation interfaceOrientation;
+
 @property (nonatomic) AVCaptureSession *session;
 @property (nonatomic) AVCaptureStillImageOutput *stillImageOut;
-@property (nonatomic) UIDeviceOrientation deviceOrientation;
 
 + (instancetype)sharedManager;
-- (void)startRecording;
-- (void)startRecordingWithCompletionHandler:(void (^)(UIImage *image, NSDictionary *metaData, NSError *error))handler;
+- (void)terminate;
+- (void)captureImageWithCompletionHandler:(void (^)(UIImage *image, NSDictionary *metaData, NSError *error))handler;
 
 @end

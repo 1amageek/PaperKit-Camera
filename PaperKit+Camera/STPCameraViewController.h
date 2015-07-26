@@ -10,13 +10,15 @@
 @import UIKit;
 @import AVFoundation;
 
+#import <PaperKit/PaperKit.h>
+
 #import "STPCameraView.h"
+#import "STPCameraCell.h"
 #import "STPCameraManager.h"
-#import "STPCameraCollectionViewController.h"
 
-@interface STPCameraViewController : UIViewController
 
-@property (nonatomic) STPCameraView *cameraView;
+@interface STPCameraViewController : PKViewController
+
 @property (nonatomic) NSArray *images;
 
 @property (nonatomic) UITapGestureRecognizer *tapGestureRecognizer;
