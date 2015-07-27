@@ -11,9 +11,5 @@
 
 
 @interface STPCameraCell : UICollectionViewCell
-
 @property (nonatomic) STPCameraView *cameraView;
-
-- (void)setController:(__strong id *)controller;
-
 @end
