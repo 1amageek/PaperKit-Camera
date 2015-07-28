@@ -50,6 +50,9 @@
 - (void)tapGesture:(UITapGestureRecognizer *)recognizer
 {
     [self draw:self.focusBox atPoint:[recognizer locationInView:self] remove:YES];
+    if ([self.delegate respondsToSelector:@selector(cameraView:optimizeAtPoint:)]) {
+        [self.delegate cameraView:self optimizeAtPoint:[recognizer locationInView:self]];
+    }
 }
 
 - (void)setOptimizeProgress:(CGFloat)optimizeProgress
@@ -126,8 +129,8 @@ static inline CGFloat POPTransition(CGFloat progress, CGFloat startValue, CGFloa
 
 - (void)triggerAction:(UIButton *)button
 {
-    if ([self.controller respondsToSelector:@selector(cameraViewStartRecording)]) {
-        [self.controller cameraViewStartRecording];
+    if ([self.delegate respondsToSelector:@selector(cameraViewStartRecording)]) {
+        [self.delegate cameraViewStartRecording];
     }
 }
 

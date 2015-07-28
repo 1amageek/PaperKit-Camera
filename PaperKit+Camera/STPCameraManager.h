@@ -16,10 +16,14 @@
 @property (nonatomic, readonly) UIInterfaceOrientation interfaceOrientation;
 
 @property (nonatomic) AVCaptureSession *session;
+@property (nonatomic) AVCaptureDeviceInput *deviceInput;
 @property (nonatomic) AVCaptureStillImageOutput *stillImageOut;
 
 + (instancetype)sharedManager;
 - (void)terminate;
 - (void)captureImageWithCompletionHandler:(void (^)(UIImage *image, NSDictionary *metaData, NSError *error))handler;
 
+- (void)optimizeAtPoint:(CGPoint)point;
+- (void)focusAtPoint:(CGPoint)point;
+- (void)exposureAtPoint:(CGPoint)point;
 @end

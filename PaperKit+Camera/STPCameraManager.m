@@ -204,20 +204,58 @@ static STPCameraManager  *sharedManager = nil;
                 break;
         }
     }
-    captureConnection.videoScaleAndCropFactor = 1;
-    [self.stillImageOut captureStillImageAsynchronouslyFromConnection:captureConnection completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
-        if (imageDataSampleBuffer != NULL) {
-            NSData *data = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
-            UIImage *image = [[UIImage alloc] initWithData:data];
-            
-            CFDictionaryRef metadata = CMCopyDictionaryOfAttachments(NULL, imageDataSampleBuffer, kCMAttachmentMode_ShouldPropagate);
-            NSDictionary *meta = [[NSDictionary alloc] initWithDictionary:(__bridge NSDictionary *)(metadata)];
-            CFRelease(metadata);
-            
-            handler(image, meta, error);
+    
+    if (captureConnection) {
+        captureConnection.videoScaleAndCropFactor = 1;
+        
+        [self.stillImageOut captureStillImageAsynchronouslyFromConnection:captureConnection completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
+            if (imageDataSampleBuffer != NULL) {
+                NSData *data = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
+                UIImage *image = [[UIImage alloc] initWithData:data];
+                
+                CFDictionaryRef metadata = CMCopyDictionaryOfAttachments(NULL, imageDataSampleBuffer, kCMAttachmentMode_ShouldPropagate);
+                NSDictionary *meta = [[NSDictionary alloc] initWithDictionary:(__bridge NSDictionary *)(metadata)];
+                CFRelease(metadata);
+                
+                handler(image, meta, error);
+            }
+            self.processing = NO;
+        }];
+    }
+}
+
+#pragma mark - Focus & Exposure
+
+- (void)optimizeAtPoint:(CGPoint)point
+{
+    [self focusAtPoint:point];
+    [self exposureAtPoint:point];
+}
+
+- (void)focusAtPoint:(CGPoint)point
+{
+    AVCaptureDevice *device = self.deviceInput.device;
+    if (device.isFocusPointOfInterestSupported && [device isFocusModeSupported:AVCaptureFocusModeAutoFocus]) {
+        NSError *error = nil;
+        if ([device lockForConfiguration:&error]) {
+            device.focusPointOfInterest = point;
+            device.focusMode = AVCaptureFocusModeAutoFocus;
+            [device unlockForConfiguration];
         }
-        self.processing = NO;
-    }];
+    }
+}
+
+- (void)exposureAtPoint:(CGPoint)point
+{
+    AVCaptureDevice *device = self.deviceInput.device;
+    if (device.isExposurePointOfInterestSupported && [device isExposureModeSupported:AVCaptureExposureModeContinuousAutoExposure]) {
+        NSError *error = nil;
+        if ( [device lockForConfiguration:&error] ) {
+            device.exposurePointOfInterest = point;
+            device.exposureMode = AVCaptureExposureModeContinuousAutoExposure;
+            [device unlockForConfiguration];
+        }
+    }
 }
 
 - (void)dealloc

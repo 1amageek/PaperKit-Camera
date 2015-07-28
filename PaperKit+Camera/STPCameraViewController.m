@@ -87,10 +87,12 @@
         
         dispatch_async(dispatch_get_main_queue(), ^{
             [STPCameraManager sharedManager].session = session;
+            [STPCameraManager sharedManager].deviceInput = cameraInput;
             [STPCameraManager sharedManager].stillImageOut = stillImageOut;
             CALayer *previewLayer = self.view.layer;
             previewLayer.masksToBounds = YES;
             [previewLayer insertSublayer:captureVideoPreviewLayer atIndex:0];
+
         });
     });
 }
@@ -102,6 +104,15 @@
     self.collectionView.backgroundColor = [UIColor clearColor];
     [self.collectionView registerClass:[STPCameraCell class] forCellWithReuseIdentifier:@"STPCameraCell"];
     [self.collectionView registerClass:[_STPCameraBackgroundCell class] forCellWithReuseIdentifier:@"_STPCameraBackgroundCell"];
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    STPCameraCell *cell = (STPCameraCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]];
+    if (cell) {
+        [cell.cameraView draw:cell.cameraView.focusBox atPoint:self.view.center remove:YES];
+    }
 }
 
 - (void)addImage:(UIImage *)image
@@ -136,7 +147,7 @@
     
     if (indexPath.item == 0) {
         STPCameraCell *cell = (STPCameraCell *)[collectionView dequeueReusableCellWithReuseIdentifier:@"STPCameraCell" forIndexPath:indexPath];
-        cell.cameraView.controller = self;
+        cell.cameraView.delegate = self;
         return cell;
     }
     
@@ -168,6 +179,11 @@
             [self addImage:image];
         }
     }];
+}
+
+- (void)cameraView:(STPCameraView *)cameraView optimizeAtPoint:(CGPoint)point
+{
+    [[STPCameraManager sharedManager] optimizeAtPoint:point];
 }
 
 - (void)dealloc

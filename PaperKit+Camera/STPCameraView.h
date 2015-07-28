@@ -16,7 +16,7 @@
 @property (nonatomic) CALayer *focusBox;
 @property (nonatomic) CALayer *exposeBox;
 
-@property (nonatomic) id <STPCameraViewDelegate> controller;
+@property (nonatomic) id <STPCameraViewDelegate> delegate;
 
 - (void)draw:(CALayer *)layer atPoint:(CGPoint)point remove:(BOOL)remove;
 
@@ -24,9 +24,12 @@
 
 @protocol STPCameraViewDelegate <NSObject>
 
-/**
- *  Tells the delegate when the camera start recording
- */
+
 - (void)cameraViewStartRecording;
+
+@optional
+- (void)cameraView:(STPCameraView *)cameraView focusAtPoint:(CGPoint)point;
+- (void)cameraView:(STPCameraView *)cameraView exposeAtPoint:(CGPoint)point;
+- (void)cameraView:(STPCameraView *)cameraView optimizeAtPoint:(CGPoint)point;
 
 @end
