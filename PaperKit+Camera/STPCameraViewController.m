@@ -7,7 +7,7 @@
 //
 
 #import "STPCameraViewController.h"
-#import "STPAssetViewController.h"
+#import "STPPreviewViewController.h"
 
 @interface _STPCameraBackgroundCell : PKCollectionViewCell
 
@@ -157,7 +157,7 @@
 - (PKContentViewController *)foregroundCollectionView:(PKCollectionView *)collectionView contentViewControllerForAtIndexPath:(NSIndexPath *)indexPath onCategory:(NSUInteger)category
 {
     UIImage *image = [self.images objectAtIndex:indexPath.item];
-    return [[STPAssetViewController alloc] initWithImage:image];
+    return [[STPPreviewViewController alloc] initWithImage:image];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -170,7 +170,6 @@
 - (void)cameraViewStartRecording
 {
     [[STPCameraManager sharedManager] captureImageWithCompletionHandler:^(UIImage *image, NSDictionary *metaData, NSError *error) {
-        
         if (error) {
             return ;
         }

@@ -1,14 +1,14 @@
 //
-//  STPAssetViewController.h
+//  STPPreviewViewController.h
 //  PaperKit+Camera
 //
-//  Created by Norikazu on 2015/07/26.
+//  Created by Norikazu on 2015/08/04.
 //  Copyright © 2015年 Stamp inc. All rights reserved.
 //
 
-#import "PKContentViewController.h"
+#import <PaperKit/PaperKit.h>
 
-@interface STPAssetViewController : PKContentViewController
+@interface STPPreviewViewController : PKContentViewController
 
 @property (nonatomic) UIImage *image;
 

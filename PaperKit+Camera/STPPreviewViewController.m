@@ -1,28 +1,27 @@
 //
-//  STPAssetViewController.m
+//  STPPreviewViewController.m
 //  PaperKit+Camera
 //
-//  Created by Norikazu on 2015/07/26.
+//  Created by Norikazu on 2015/08/04.
 //  Copyright © 2015年 Stamp inc. All rights reserved.
 //
 
-#import "STPAssetViewController.h"
+#import "STPPreviewViewController.h"
 
-@interface STPAssetViewController ()
+@interface STPPreviewViewController ()
 
-@property (nonatomic) UIImageView *imageView;
+@property (nonatomic) PKPreviewView *imageView;
 
 @end
 
-@implementation STPAssetViewController
+@implementation STPPreviewViewController
 
 - (nullable instancetype)initWithImage:(nonnull UIImage *)image
 {
     self = [super init];
     if (self) {
         _image = image;
-        _imageView = [[UIImageView alloc] initWithImage:image];
-        _imageView.contentMode = UIViewContentModeScaleAspectFill;
+        _imageView = [[PKPreviewView alloc] initWithImage:image];
         _imageView.clipsToBounds = YES;
         
     }
@@ -47,14 +46,13 @@
     [self.imageView setNeedsDisplay];
 }
 
-- (UIImageView *)imageView
+- (PKPreviewView *)imageView
 {
     if (_imageView) {
         return _imageView;
     }
     
-    _imageView = [[UIImageView alloc] initWithFrame:self.view.bounds];
-    _imageView.contentMode = UIViewContentModeScaleAspectFill;
+    _imageView = [[PKPreviewView alloc] initWithFrame:self.view.bounds];
     _imageView.clipsToBounds = YES;
     return _imageView;
 }
