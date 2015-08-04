@@ -34,6 +34,18 @@
     self.view.backgroundColor = [UIColor whiteColor];
 }
 
+- (void)viewDidDisplayInFullScreen
+{
+    [super viewDidDisplayInFullScreen];
+    [self.imageView startMotion];
+}
+
+- (void)viewDidEndDisplayingInFullScreen
+{
+    [super viewDidEndDisplayingInFullScreen];
+    [self.imageView stopMotion];
+}
+
 - (void)viewWillLayoutSubviews
 {
     self.imageView.frame = self.view.bounds;

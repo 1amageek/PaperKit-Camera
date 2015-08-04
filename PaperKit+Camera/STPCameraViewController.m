@@ -169,6 +169,16 @@
 
 - (void)cameraViewStartRecording
 {
+    
+#if TARGET_IPHONE_SIMULATOR
+    
+    NSUInteger i = random() % 4 + 1;
+    NSString *name = [NSString stringWithFormat:@"%lu", (unsigned long)i];
+    UIImage *image = [UIImage imageNamed:name];
+    
+    [self addImage:image];
+    
+#else
     [[STPCameraManager sharedManager] captureImageWithCompletionHandler:^(UIImage *image, NSDictionary *metaData, NSError *error) {
         if (error) {
             return ;
@@ -178,6 +188,7 @@
             [self addImage:image];
         }
     }];
+#endif
 }
 
 - (void)cameraView:(STPCameraView *)cameraView optimizeAtPoint:(CGPoint)point
