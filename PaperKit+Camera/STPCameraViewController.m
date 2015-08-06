@@ -31,6 +31,7 @@
 
 @interface STPCameraViewController () <STPCameraViewDelegate>
 @property (nonatomic) UIView *preview;
+@property (nonatomic) AVCaptureVideoPreviewLayer *captureVideoPreviewLayer;
 @property (nonatomic) NSArray *backgroundData;
 @property (nonatomic) NSArray *foregroundData;
 @end
@@ -80,9 +81,9 @@
             [session addOutput:stillImageOut];
         }
         
-        AVCaptureVideoPreviewLayer *captureVideoPreviewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:session];
-        captureVideoPreviewLayer.frame = self.view.bounds;
-        captureVideoPreviewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+        _captureVideoPreviewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:session];
+        _captureVideoPreviewLayer.frame = self.view.bounds;
+        _captureVideoPreviewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
         [session startRunning];
         
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -91,7 +92,7 @@
             [STPCameraManager sharedManager].stillImageOut = stillImageOut;
             CALayer *previewLayer = self.view.layer;
             previewLayer.masksToBounds = YES;
-            [previewLayer insertSublayer:captureVideoPreviewLayer atIndex:0];
+            [previewLayer insertSublayer:_captureVideoPreviewLayer atIndex:0];
 
         });
     });
@@ -100,7 +101,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.minimumZoomScale = 0.2;
+    self.minimumZoomScale = 0.22;
     self.collectionView.backgroundColor = [UIColor clearColor];
     [self.collectionView registerClass:[STPCameraCell class] forCellWithReuseIdentifier:@"STPCameraCell"];
     [self.collectionView registerClass:[_STPCameraBackgroundCell class] forCellWithReuseIdentifier:@"_STPCameraBackgroundCell"];
@@ -193,7 +194,9 @@
 
 - (void)cameraView:(STPCameraView *)cameraView optimizeAtPoint:(CGPoint)point
 {
-    [[STPCameraManager sharedManager] optimizeAtPoint:point];
+
+    CGPoint convertPoint = [[STPCameraManager sharedManager] convertToPointOfInterestFrom:self.captureVideoPreviewLayer.frame coordinates:point layer:self.captureVideoPreviewLayer];
+    [[STPCameraManager sharedManager] optimizeAtPoint:convertPoint];
 }
 
 - (void)dealloc

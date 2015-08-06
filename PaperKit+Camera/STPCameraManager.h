@@ -23,7 +23,10 @@
 - (void)terminate;
 - (void)captureImageWithCompletionHandler:(void (^)(UIImage *image, NSDictionary *metaData, NSError *error))handler;
 
+- (CGPoint) convertToPointOfInterestFrom:(CGRect)frame coordinates:(CGPoint)viewCoordinates layer:(AVCaptureVideoPreviewLayer *)layer;
+
 - (void)optimizeAtPoint:(CGPoint)point;
 - (void)focusAtPoint:(CGPoint)point;
 - (void)exposureAtPoint:(CGPoint)point;
+
 @end

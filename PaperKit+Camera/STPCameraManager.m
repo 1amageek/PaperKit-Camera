@@ -258,6 +258,94 @@ static STPCameraManager  *sharedManager = nil;
     }
 }
 
+- (CGPoint) convertToPointOfInterestFrom:(CGRect)frame coordinates:(CGPoint)viewCoordinates layer:(AVCaptureVideoPreviewLayer *)layer
+{
+    CGPoint pointOfInterest = (CGPoint){ 0.5f, 0.5f };
+    CGSize frameSize = frame.size;
+    
+    AVCaptureVideoPreviewLayer *videoPreviewLayer = layer;
+    
+    if ( [[videoPreviewLayer videoGravity] isEqualToString:AVLayerVideoGravityResize] )
+        pointOfInterest = (CGPoint){ viewCoordinates.y / frameSize.height, 1.0f - (viewCoordinates.x / frameSize.width) };
+    else {
+        CGRect cleanAperture;
+        for (AVCaptureInputPort *port in self.deviceInput.ports) {
+            if ([port mediaType] == AVMediaTypeVideo) {
+                cleanAperture = CMVideoFormatDescriptionGetCleanAperture([port formatDescription], YES);
+                CGSize apertureSize = cleanAperture.size;
+                CGPoint point = viewCoordinates;
+                
+                CGFloat apertureRatio = apertureSize.height / apertureSize.width;
+                CGFloat viewRatio = frameSize.width / frameSize.height;
+                CGFloat xc = 0.5f;
+                CGFloat yc = 0.5f;
+                
+                if ( [[videoPreviewLayer videoGravity] isEqualToString:AVLayerVideoGravityResizeAspect] ) {
+                    if (viewRatio > apertureRatio) {
+                        CGFloat y2 = frameSize.height;
+                        CGFloat x2 = frameSize.height * apertureRatio;
+                        CGFloat x1 = frameSize.width;
+                        CGFloat blackBar = (x1 - x2) / 2;
+                        if (point.x >= blackBar && point.x <= blackBar + x2) {
+                            xc = point.y / y2;
+                            yc = 1.0f - ((point.x - blackBar) / x2);
+                        }
+                    } else {
+                        CGFloat y2 = frameSize.width / apertureRatio;
+                        CGFloat y1 = frameSize.height;
+                        CGFloat x2 = frameSize.width;
+                        CGFloat blackBar = (y1 - y2) / 2;
+                        if (point.y >= blackBar && point.y <= blackBar + y2) {
+                            xc = ((point.y - blackBar) / y2);
+                            yc = 1.0f - (point.x / x2);
+                        }
+                    }
+                } else if ([[videoPreviewLayer videoGravity] isEqualToString:AVLayerVideoGravityResizeAspectFill]) {
+                    if (viewRatio > apertureRatio) {
+                        CGFloat y2 = apertureSize.width * (frameSize.width / apertureSize.height);
+                        xc = (point.y + ((y2 - frameSize.height) / 2.0f)) / y2;
+                        yc = (frameSize.width - point.x) / frameSize.width;
+                    } else {
+                        CGFloat x2 = apertureSize.height * (frameSize.height / apertureSize.width);
+                        yc = 1.0f - ((point.x + ((x2 - frameSize.width) / 2)) / x2);
+                        xc = point.y / frameSize.height;
+                    }
+                }
+                
+                pointOfInterest = (CGPoint){ xc, yc };
+                break;
+            }
+        }
+    }
+    
+    return pointOfInterest;
+}
+
+- (AVCaptureDevice *)cameraWithPosition:(AVCaptureDevicePosition)position
+{
+    __block AVCaptureDevice *deviceBlock = nil;
+    
+    [[AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo] enumerateObjectsUsingBlock:^( AVCaptureDevice *device, NSUInteger idx, BOOL *stop ) {
+        if ( [device position] == position ) {
+            deviceBlock = device;
+            *stop = YES;
+        }
+    }];
+    
+    return deviceBlock;
+}
+
+- (AVCaptureDevice *)frontCamera
+{
+    return [self cameraWithPosition:AVCaptureDevicePositionFront];
+}
+
+- (AVCaptureDevice *)backCamera
+{
+    return [self cameraWithPosition:AVCaptureDevicePositionBack];
+}
+
+
 - (void)dealloc
 {
     [self.motionManager stopAccelerometerUpdates];

@@ -21,8 +21,6 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
     
-    
-    
     _addButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [_addButton setTitle:@"add new window" forState:UIControlStateNormal];
     [_addButton addTarget:self action:@selector(addTapped:) forControlEvents:UIControlEventTouchUpInside];
