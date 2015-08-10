@@ -11,6 +11,8 @@
 		8C2F21B91B64E46C004B8688 /* STPCameraCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 8C2F21B81B64E46C004B8688 /* STPCameraCell.m */; };
 		8C2F21C11B64F9AC004B8688 /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C2F21C01B64F9AC004B8688 /* CoreMotion.framework */; };
 		8C9BB0C61B59CB6E00090656 /* STPCameraManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 8C9BB0C51B59CB6E00090656 /* STPCameraManager.m */; };
+		8CC101E21B78316C007210EF /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8CC101E11B78316C007210EF /* CoreLocation.framework */; };
+		8CC101E41B78330F007210EF /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8CC101E31B78330F007210EF /* ImageIO.framework */; };
 		8CD2B3EE1B7042E40058964A /* STPPreviewViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 8CD2B3ED1B7042E40058964A /* STPPreviewViewController.m */; };
 		8CD6AD541B58D7F80086BD5E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 8CD6AD531B58D7F80086BD5E /* main.m */; };
 		8CD6AD571B58D7F80086BD5E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8CD6AD561B58D7F80086BD5E /* AppDelegate.m */; };
@@ -50,6 +52,8 @@
 		8C2F21C01B64F9AC004B8688 /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
 		8C9BB0C41B59CB6E00090656 /* STPCameraManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STPCameraManager.h; sourceTree = "<group>"; };
 		8C9BB0C51B59CB6E00090656 /* STPCameraManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STPCameraManager.m; sourceTree = "<group>"; };
+		8CC101E11B78316C007210EF /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
+		8CC101E31B78330F007210EF /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		8CD2B3EC1B7042E40058964A /* STPPreviewViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = STPPreviewViewController.h; sourceTree = "<group>"; };
 		8CD2B3ED1B7042E40058964A /* STPPreviewViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = STPPreviewViewController.m; sourceTree = "<group>"; };
 		8CD6AD4F1B58D7F80086BD5E /* PaperKit+Camera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PaperKit+Camera.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -85,6 +89,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8CC101E41B78330F007210EF /* ImageIO.framework in Frameworks */,
+				8CC101E21B78316C007210EF /* CoreLocation.framework in Frameworks */,
 				8C2F21C11B64F9AC004B8688 /* CoreMotion.framework in Frameworks */,
 				8CD6AD8F1B58E8F20086BD5E /* AVFoundation.framework in Frameworks */,
 				4F2C7D04A3A29098B3CA9BAE /* libPods.a in Frameworks */,
@@ -120,6 +126,8 @@
 		35050FAF8A5700543A6A965F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				8CC101E31B78330F007210EF /* ImageIO.framework */,
+				8CC101E11B78316C007210EF /* CoreLocation.framework */,
 				8C2F21C01B64F9AC004B8688 /* CoreMotion.framework */,
 				8CD6AD8E1B58E8F20086BD5E /* AVFoundation.framework */,
 				020AC06486DC4CFE3DF955EF /* libPods.a */,

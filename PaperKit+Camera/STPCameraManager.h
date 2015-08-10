@@ -9,8 +9,14 @@
 @import UIKit;
 @import AVFoundation;
 @import CoreMotion;
+@import CoreLocation;
+@import ImageIO;
 
-@interface STPCameraManager : NSObject
+
+@protocol STPCameraManagerDelegate;
+@interface STPCameraManager : NSObject <CLLocationManagerDelegate>
+
+@property (nonatomic, weak) id <STPCameraManagerDelegate> delegate;
 
 @property (nonatomic, readonly) UIDeviceOrientation deviceOrientation;
 @property (nonatomic, readonly) UIInterfaceOrientation interfaceOrientation;
@@ -19,7 +25,16 @@
 @property (nonatomic) AVCaptureDeviceInput *deviceInput;
 @property (nonatomic) AVCaptureStillImageOutput *stillImageOut;
 
+
+@property (nonatomic) CLLocationManager *locationManager;
+@property (nonatomic, readonly) BOOL isTraking;
+
+@property (nonatomic) CMMotionManager* motionManager;
+
+
+
 + (instancetype)sharedManager;
+- (void)start;
 - (void)terminate;
 - (void)captureImageWithCompletionHandler:(void (^)(UIImage *image, NSDictionary *metaData, NSError *error))handler;
 
@@ -28,5 +43,11 @@
 - (void)optimizeAtPoint:(CGPoint)point;
 - (void)focusAtPoint:(CGPoint)point;
 - (void)exposureAtPoint:(CGPoint)point;
+
+@end
+
+@protocol STPCameraManagerDelegate <NSObject>
+
+- (void)cameraManager:(STPCameraManager *)manager readyForLocationManager:(CLLocationManager *)locationManager;
 
 @end

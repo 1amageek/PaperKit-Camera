@@ -11,8 +11,7 @@
 @interface STPCameraManager ()
 
 @property (nonatomic, getter=isProcessing) BOOL processing;
-@property (strong) CMMotionManager* motionManager;
-@property (strong) NSOperationQueue* operationQueue;
+@property (nonatomic) NSOperationQueue* operationQueue;
 
 @end
 
@@ -36,15 +35,20 @@ static STPCameraManager  *sharedManager = nil;
         self = [super init];
         if (self) {
             _processing = NO;
+            _isTraking = NO;
             _deviceOrientation = UIDeviceOrientationPortrait;
             _interfaceOrientation = UIInterfaceOrientationPortrait;
             _operationQueue = [NSOperationQueue new];
-            _motionManager = [[CMMotionManager alloc] init];
-            _motionManager.accelerometerUpdateInterval = 0.1;
-            [self start];
+            [self start]; // FIXME
         }
         return self;
     }
+}
+
+- (void)start
+{
+    [self startMotionManager];
+    [self startLocationManager];
 }
 
 - (void)terminate
@@ -52,7 +56,62 @@ static STPCameraManager  *sharedManager = nil;
     sharedManager = nil;
 }
 
-- (void)start
+- (CMMotionManager *)motionManager
+{
+    if (_motionManager) {
+        return _motionManager;
+    }
+    
+    _motionManager = [CMMotionManager new];
+    _motionManager.accelerometerUpdateInterval = 0.1;
+    return _motionManager;
+}
+
+- (CLLocationManager *)locationManager
+{
+    if (_locationManager) {
+        return _locationManager;
+    }
+    _isTraking = NO;
+    _locationManager = [CLLocationManager new];
+    _locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
+    _locationManager.distanceFilter = kCLDistanceFilterNone;
+    _locationManager.delegate = self;
+    return _locationManager;
+}
+
+
+#pragma mark - Location manager
+
+- (void)startLocationManager
+{
+    if ([self.locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
+        [self.locationManager requestAlwaysAuthorization];
+    } else {
+        [self.locationManager startUpdatingLocation];
+    }
+}
+
+- (void)locationManager:(nonnull CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+{
+    if (status == kCLAuthorizationStatusAuthorizedAlways || status == kCLAuthorizationStatusAuthorizedWhenInUse) {
+        [self.locationManager startUpdatingLocation];
+    }
+}
+
+- (void)locationManager:(nonnull CLLocationManager *)manager didUpdateLocations:(nonnull NSArray<CLLocation *> *)locations
+{
+    if (!self.isTraking) {
+        _isTraking = YES;
+        if ([self.delegate respondsToSelector:@selector(cameraManager:readyForLocationManager:)]) {
+            [self.delegate cameraManager:self readyForLocationManager:self.locationManager];
+        }
+    }
+}
+
+#pragma mark - Motion manager
+
+- (void)startMotionManager
 {
     [self.motionManager startAccelerometerUpdatesToQueue:self.operationQueue withHandler:^(CMAccelerometerData * _Nullable accelerometerData, NSError * _Nullable error) {
         
@@ -135,6 +194,7 @@ static STPCameraManager  *sharedManager = nil;
         
     }];
 }
+
 #pragma mark - util
 
 - (AVCaptureConnection *)connectionWithMediaType:(NSString *)mediaType fromConnections:(NSArray *)connections {
@@ -214,8 +274,13 @@ static STPCameraManager  *sharedManager = nil;
                 UIImage *image = [[UIImage alloc] initWithData:data];
                 
                 CFDictionaryRef metadata = CMCopyDictionaryOfAttachments(NULL, imageDataSampleBuffer, kCMAttachmentMode_ShouldPropagate);
-                NSDictionary *meta = [[NSDictionary alloc] initWithDictionary:(__bridge NSDictionary *)(metadata)];
+                NSMutableDictionary *meta = [[NSMutableDictionary alloc] initWithDictionary:(__bridge NSDictionary *)(metadata)];
+                //NSMutableDictionary *exif = meta[(NSString *)kCGImagePropertyExifDictionary];
                 CFRelease(metadata);
+                
+                if (self.isTraking && self.locationManager) {
+                    meta[(NSString *)kCGImagePropertyGPSDictionary] = [self GPSDictionaryForLocation:self.locationManager.location];
+                }
                 
                 handler(image, meta, error);
             }
@@ -223,6 +288,59 @@ static STPCameraManager  *sharedManager = nil;
         }];
     }
 }
+
+- (NSDictionary *)GPSDictionaryForLocation:(CLLocation *)location
+{
+    NSMutableDictionary *gps = [NSMutableDictionary new];
+    
+    // 日付
+    gps[(NSString *)kCGImagePropertyGPSDateStamp] = [[self GPSDateFormatter] stringFromDate:location.timestamp];
+    // タイムスタンプ
+    gps[(NSString *)kCGImagePropertyGPSTimeStamp] = [[self GPSTimeFormatter] stringFromDate:location.timestamp];
+    
+
+    // 緯度
+    CGFloat latitude = location.coordinate.latitude;
+    NSString *gpsLatitudeRef;
+    if (latitude < 0) {
+        latitude = -latitude;
+        gpsLatitudeRef = @"S";
+    } else {
+        gpsLatitudeRef = @"N";
+    }
+    gps[(NSString *)kCGImagePropertyGPSLatitudeRef] = gpsLatitudeRef;
+    gps[(NSString *)kCGImagePropertyGPSLatitude] = @(latitude);
+    
+    // 経度
+    CGFloat longitude = location.coordinate.longitude;
+    NSString *gpsLongitudeRef;
+    if (longitude < 0) {
+        longitude = -longitude;
+        gpsLongitudeRef = @"W";
+    } else {
+        gpsLongitudeRef = @"E";
+    }
+    gps[(NSString *)kCGImagePropertyGPSLongitudeRef] = gpsLongitudeRef;
+    gps[(NSString *)kCGImagePropertyGPSLongitude] = @(longitude);
+    
+    // 標高
+    CGFloat altitude = location.altitude;
+    if (!isnan(altitude)){
+        NSString *gpsAltitudeRef;
+        if (altitude < 0) {
+            altitude = -altitude;
+            gpsAltitudeRef = @"1";
+        } else {
+            gpsAltitudeRef = @"0";
+        }
+        gps[(NSString *)kCGImagePropertyGPSAltitudeRef] = gpsAltitudeRef;
+        gps[(NSString *)kCGImagePropertyGPSAltitude] = @(altitude);
+    }
+    
+    return gps;
+}
+
+
 
 #pragma mark - Focus & Exposure
 
@@ -258,7 +376,7 @@ static STPCameraManager  *sharedManager = nil;
     }
 }
 
-- (CGPoint) convertToPointOfInterestFrom:(CGRect)frame coordinates:(CGPoint)viewCoordinates layer:(AVCaptureVideoPreviewLayer *)layer
+- (CGPoint)convertToPointOfInterestFrom:(CGRect)frame coordinates:(CGPoint)viewCoordinates layer:(AVCaptureVideoPreviewLayer *)layer
 {
     CGPoint pointOfInterest = (CGPoint){ 0.5f, 0.5f };
     CGSize frameSize = frame.size;
@@ -351,6 +469,58 @@ static STPCameraManager  *sharedManager = nil;
     [self.motionManager stopAccelerometerUpdates];
     self.operationQueue = nil;
     self.motionManager = nil;
+}
+
+#pragma mark - DateFormat
+
+- (NSDateFormatter *)exifDateFormatter
+{
+    static NSDateFormatter *dateFormatter;
+    
+    if (!dateFormatter) {
+        dateFormatter = [[NSDateFormatter alloc] init];
+        dateFormatter.dateFormat = @"yyyy:MM:dd HH:mm:ss";
+    }
+    
+    return dateFormatter;
+}
+
+- (NSDateFormatter *)GPSDateFormatter
+{
+    static NSDateFormatter *dateFormatter;
+    
+    if (!dateFormatter) {
+        dateFormatter = [[NSDateFormatter alloc] init];
+        dateFormatter.dateFormat = @"yyyy:MM:dd";
+        dateFormatter.timeZone = [NSTimeZone timeZoneWithAbbreviation:@"UTC"];
+    }
+    
+    return dateFormatter;
+}
+
+- (NSDateFormatter *)GPSTimeFormatter
+{
+    static NSDateFormatter *dateFormatter;
+    
+    if (!dateFormatter) {
+        dateFormatter = [[NSDateFormatter alloc] init];
+        dateFormatter.dateFormat = @"HH:mm:ss.SSSSSS";
+        dateFormatter.timeZone = [NSTimeZone timeZoneWithAbbreviation:@"UTC"];
+    }
+    
+    return dateFormatter;
+}
+
+- (NSDateFormatter *)fileNameDateFormatter
+{
+    static NSDateFormatter *dateFormatter;
+    
+    if (!dateFormatter) {
+        dateFormatter = [[NSDateFormatter alloc] init];
+        dateFormatter.dateFormat = @"yyyyMMddHHmmss";
+    }
+    
+    return dateFormatter;
 }
 
 

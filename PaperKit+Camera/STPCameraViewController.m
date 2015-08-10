@@ -29,7 +29,7 @@
 }
 @end
 
-@interface STPCameraViewController () <STPCameraViewDelegate>
+@interface STPCameraViewController () <STPCameraViewDelegate, STPCameraManagerDelegate>
 @property (nonatomic) UIView *preview;
 @property (nonatomic) AVCaptureVideoPreviewLayer *captureVideoPreviewLayer;
 @property (nonatomic) NSArray *backgroundData;
@@ -90,6 +90,7 @@
             [STPCameraManager sharedManager].session = session;
             [STPCameraManager sharedManager].deviceInput = cameraInput;
             [STPCameraManager sharedManager].stillImageOut = stillImageOut;
+            [STPCameraManager sharedManager].delegate = self;
             CALayer *previewLayer = self.view.layer;
             previewLayer.masksToBounds = YES;
             [previewLayer insertSublayer:_captureVideoPreviewLayer atIndex:0];
@@ -173,7 +174,7 @@
     
 #if TARGET_IPHONE_SIMULATOR
     
-    NSUInteger i = random() % 4 + 1;
+    NSUInteger i = random() % 7 + 1;
     NSString *name = [NSString stringWithFormat:@"%lu", (unsigned long)i];
     UIImage *image = [UIImage imageNamed:name];
     
@@ -186,6 +187,8 @@
         }
         
         if (image) {
+            NSLog(@"meta %@", metaData);
+            
             [self addImage:image];
         }
     }];
@@ -197,6 +200,13 @@
 
     CGPoint convertPoint = [[STPCameraManager sharedManager] convertToPointOfInterestFrom:self.captureVideoPreviewLayer.frame coordinates:point layer:self.captureVideoPreviewLayer];
     [[STPCameraManager sharedManager] optimizeAtPoint:convertPoint];
+}
+
+#pragma mark - CameraManager
+
+- (void)cameraManager:(STPCameraManager *)manager readyForLocationManager:(CLLocationManager *)locationManager
+{
+    NSLog(@"cameraManager");
 }
 
 - (void)dealloc
