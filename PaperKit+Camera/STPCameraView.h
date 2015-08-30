@@ -13,6 +13,7 @@
 @protocol STPCameraViewDelegate;
 @interface STPCameraView : UIView
 
+@property (nonatomic) CGPoint triggerButtonCenter;
 @property (nonatomic) CALayer *focusBox;
 @property (nonatomic) CALayer *exposeBox;
 

@@ -60,7 +60,6 @@
 {
     _images = @[];
     _backgroundData = @[@"撮影"];
-    [self setupAVCapture];
 }
 
 - (void)setupAVCapture
@@ -102,10 +101,11 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.minimumZoomScale = 0.22;
+    self.minimumZoomScale = 0.07;
     self.collectionView.backgroundColor = [UIColor clearColor];
     [self.collectionView registerClass:[STPCameraCell class] forCellWithReuseIdentifier:@"STPCameraCell"];
     [self.collectionView registerClass:[_STPCameraBackgroundCell class] forCellWithReuseIdentifier:@"_STPCameraBackgroundCell"];
+    [self setupAVCapture];
 }
 
 - (void)viewDidAppear:(BOOL)animated

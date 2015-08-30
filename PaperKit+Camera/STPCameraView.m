@@ -11,12 +11,16 @@
 @interface STPCameraView ()
 
 @property (nonatomic) UIButton *triggerButton;
+@property (nonatomic) CALayer *triggerButtonOutline;
 @property (nonatomic) CGFloat optimizeProgress;
 @property (nonatomic) UITapGestureRecognizer *tapGestureRecognizer;
 
 @end
 
 @implementation STPCameraView
+
+static CGFloat triggerButtonRadius = 24;
+static CGFloat triggerButtonOutlineRadius = 32;
 
 - (nullable instancetype)initWithCoder:(nonnull NSCoder *)aDecoder
 {
@@ -38,7 +42,9 @@
 
 - (void)commonInit
 {
+    _triggerButtonCenter = CGPointMake(self.bounds.size.width/2, self.bounds.size.height - triggerButtonOutlineRadius * 2 - 25 );
     self.tintColor = [UIColor whiteColor];
+    [self.layer addSublayer:self.triggerButtonOutline];
     [self.layer addSublayer:self.focusBox];
     //[self.layer addSublayer:self.exposeBox];
     [self addSubview:self.triggerButton];
@@ -119,9 +125,9 @@ static inline CGFloat POPTransition(CGFloat progress, CGFloat startValue, CGFloa
     
     _triggerButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [_triggerButton setBackgroundColor:self.tintColor];
-    [_triggerButton setFrame:(CGRect){ 0, 0, 66, 66 }];
-    [_triggerButton.layer setCornerRadius:33.0f];
-    [_triggerButton setCenter:(CGPoint){ CGRectGetMidX(self.bounds), CGRectGetHeight(self.bounds) - 200 }];
+    [_triggerButton setFrame:(CGRect){ 0, 0, triggerButtonRadius * 2, triggerButtonRadius * 2}];
+    [_triggerButton.layer setCornerRadius:triggerButtonRadius];
+    [_triggerButton setCenter:self.triggerButtonCenter];
     [_triggerButton addTarget:self action:@selector(triggerAction:) forControlEvents:UIControlEventTouchUpInside];
     
     return _triggerButton;
@@ -129,6 +135,17 @@ static inline CGFloat POPTransition(CGFloat progress, CGFloat startValue, CGFloa
 
 - (void)triggerAction:(UIButton *)button
 {
+    
+    POPBasicAnimation *animation = [self.triggerButton.layer pop_animationForKey:@"inc.stamp.stp.camera.trigger"];
+    if (!animation) {
+        animation = [POPBasicAnimation animationWithPropertyNamed:kPOPLayerOpacity];
+        animation.duration = 0.25;
+        [self.triggerButton.layer pop_addAnimation:animation forKey:@"inc.stamp.stp.camera.trigger"];
+    }
+    animation.fromValue = @(0);
+    animation.toValue = @(1);
+    
+    
     if ([self.delegate respondsToSelector:@selector(cameraViewStartRecording)]) {
         [self.delegate cameraViewStartRecording];
     }
@@ -137,13 +154,29 @@ static inline CGFloat POPTransition(CGFloat progress, CGFloat startValue, CGFloa
 
 #pragma mark - Focus / Expose Box
 
+- (CALayer *)triggerButtonOutline
+{
+    if (_triggerButtonOutline) {
+        return _triggerButtonOutline;
+    }
+    
+    _triggerButtonOutline = [CALayer layer];
+    [_triggerButtonOutline setCornerRadius:triggerButtonOutlineRadius];
+    [_triggerButtonOutline setBounds:CGRectMake(0.0f, 0.0f, triggerButtonOutlineRadius * 2, triggerButtonOutlineRadius * 2)];
+    [_triggerButtonOutline setBorderWidth:5.0f];
+    [_triggerButtonOutline setPosition:self.triggerButtonCenter];
+    [_triggerButtonOutline setBorderColor:[[UIColor whiteColor] CGColor]];
+    
+    return _triggerButtonOutline;
+}
+
 - (CALayer *)focusBox
 {
     if (_focusBox) {
         return _focusBox;
     }
     
-    _focusBox = [CALayer new];
+    _focusBox = [CALayer layer];
     [_focusBox setCornerRadius:45.0f];
     [_focusBox setBounds:CGRectMake(0.0f, 0.0f, 90, 90)];
     [_focusBox setBorderWidth:1.f];
@@ -158,7 +191,7 @@ static inline CGFloat POPTransition(CGFloat progress, CGFloat startValue, CGFloa
         return _exposeBox;
     }
     
-    _exposeBox = [CALayer new];
+    _exposeBox = [CALayer layer];
     [_exposeBox setCornerRadius:55.0f];
     [_exposeBox setBounds:CGRectMake(0.0f, 0.0f, 110, 110)];
     [_exposeBox setBorderWidth:5.f];
